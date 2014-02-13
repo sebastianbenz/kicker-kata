@@ -2,7 +2,6 @@ module Kicker
   
   class Game
 
-
     def initialize
       @score = {}
     end

@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Kicker::Game do
+describe 'Keeping score' do
 
   let(:goal_black){ Event.from_string('goal:black') }
   let(:game){ 
@@ -11,14 +11,23 @@ describe Kicker::Game do
     game
   }
 
-  it 'counts scores' do
-    5.times { game.handle_event(goal_black) }
-    expect(@result).to eq(nil)
-    game.handle_event(goal_black)
-    expect(@result.winner.color).to eq(:black)
+  (1..5).each do |non_winning_goal_count|
+
+    it 'no winner before 6 goals' do
+      non_winning_goal_count.times { black_scores }
+      expect(@result).to eq(nil)
+    end
+
   end
 
+  it 'notifies winner after 6 goals' do
+    6.times { black_scores }
+    expect(@result.winner).to eq(:black)
+    expect(@result.looser).to eq(:white)
+  end
 
-
+  def black_scores()
+    game.handle_event(goal_black)
+  end
 
 end

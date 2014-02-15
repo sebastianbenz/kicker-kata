@@ -1,40 +1,38 @@
 require 'spec_helper'
+include Event
 
-describe Event do
+describe 'Event' do
 
-  describe 'goal events' do
+  context 'from string' do
 
-    it 'of type Goal' do
-      event = Event.from_string('goal:black')
-      expect(event).to be_a(Event::Goal)
+    context 'goal' do
+      subject { Event.from_string('goal:black') }
+      it { should be_a(Goal) } 
+      its(:is_black) { should be_true } 
+      its(:is_white) { should be_false } 
     end
 
-    it 'for team black' do
-      event = Event.from_string('goal:black')
-      expect(event.team).to eq(:black)
+    describe 'new player' do
+
+      context 'black offense' do
+        subject { Event.from_string('register:black:offense:A') }
+        it { should be_a(Registration) } 
+        its(:is_black) { should be_true } 
+        its(:is_white) { should be_false } 
+        its(:position) { should eq('offense') } 
+        its(:name) { should eq('A') } 
+      end
+
+      context 'white defense' do
+        subject { Event.from_string('register:white:defense:B') }
+        it { should be_a(Registration) } 
+        its(:is_white) { should be_true } 
+        its(:is_black) { should be_false } 
+        its(:position) { should eq('defense') } 
+        its(:name) { should eq('B') } 
+      end
+
     end
-
-    it 'for team white' do
-      event = Event.from_string('goal:white')
-      expect(event.team).to eq(:white)
-    end
-
-  end
-
-  describe 'register events' do
-
-    before do
-      @event = Event.from_string('register:black:offense:seb')
-    end
-
-    it 'of type Register' do
-      expect(@event).to be_a(Event::Register)
-    end
-
-    it 'team' do
-      expect(@event.team).to eq(:black)
-    end
-
 
   end
 

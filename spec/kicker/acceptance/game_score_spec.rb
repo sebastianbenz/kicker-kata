@@ -1,24 +1,22 @@
 require 'spec_helper'
 
 describe 'game score' do
+  include_context 'kicker'
 
-  let(:output){ double('output') }
-  let(:statistics){ Kicker::Statistics.new(output) }
-  new_game_result = Kicker::Score.new(0, 0)
-  white_has_one_goal = Kicker::Score.new(0, 1)
-  white_has_two_goals = Kicker::Score.new(0, 2)
-  black_has_one_goal = Kicker::Score.new(1, 0)
-  let(:goal_white){ 'goal:white' }
-  let(:goal_black){ 'goal:black' }
-  let(:new_player){ 'register:white:offense:A' }
+  new_game_result = Kicker::Score.new(0, 0).to_s
+  white_has_one_goal = Kicker::Score.new(0, 1).to_s
+  white_has_two_goals = Kicker::Score.new(0, 2).to_s
+  black_has_one_goal = Kicker::Score.new(1, 0).to_s
 
   context 'in game results' do
 
-    context '' do
+    context 'black scores' do
 
       it 'new score is black 1 / white 0' do
-        expect(output).to receive(:on_new_score).with(black_has_one_goal)
-        statistics.handle_event(goal_black)
+        goal_for(:black)
+        expect(events.scores).to eq([
+          black_has_one_goal
+        ])
       end
 
     end
@@ -26,20 +24,25 @@ describe 'game score' do
     context 'white scores' do
 
       it 'once -> 0-1' do
-        expect(output).to receive(:on_new_score).with(white_has_one_goal)
-        statistics.handle_event(goal_white)
+        goal_for(:white)
+        expect(events.scores).to eq([
+          white_has_one_goal
+        ])
       end
 
       it 'twice -> 0-2' do
-        expect(output).to receive(:on_new_score).once.ordered.with(white_has_one_goal)
-        expect(output).to receive(:on_new_score).once.ordered.with(white_has_two_goals)
-        2.times { statistics.handle_event(goal_white) }
+        2.times { goal_for(:white) }
+        expect(events.scores).to eq([
+          white_has_one_goal,
+          white_has_two_goals
+        ])
       end
 
       it '7 times -> new game 0-1' do
-        expect(output).to receive(:on_new_score).exactly(6).times.ordered
-        expect(output).to receive(:on_new_score).once.ordered.with(white_has_one_goal)
-        7.times{ statistics.handle_event(goal_white) } 
+        7.times { goal_for(:white) }
+        expect(events.scores.last).to eq(
+          white_has_one_goal
+        )
       end
 
     end
@@ -49,8 +52,10 @@ describe 'game score' do
   context 'new player registers' do
 
     it 'starts new game' do
-        expect(output).to receive(:on_new_score).with(new_game_result)
-        statistics.handle_event(new_player)
+        register(:white, :offense, 'Any Player')
+        expect(events.scores).to eq([
+          new_game_result
+        ])
     end
 
   end

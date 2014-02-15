@@ -8,7 +8,7 @@ Given a foosball table (in German "Kicker") which is connected to the internet. 
 
 Your job is to implement a real-time statistics calculator with the following features:
 
-- The score of the active game.
+- Counts the score of the active game.
 - Ranking list of individual players ordered by their number of wins.
 - Ranking list of teams ordered by their number of wins.
 

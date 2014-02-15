@@ -1,3 +1,5 @@
+require 'json'
+
 module Event
 
   def self.from_string(input)
@@ -36,6 +38,19 @@ module Event
 
     def is_white
       !is_black 
+    end
+
+  end
+
+  
+  class Ranking 
+    
+    def initialize(ranking)
+      @ranking = ranking
+    end
+
+    def to_s
+      "player-ranking:#{@ranking.to_json}"
     end
 
   end

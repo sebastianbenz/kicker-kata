@@ -1,4 +1,7 @@
 $: << File.join(File.dirname(__FILE__), '/../lib')
+Dir["./spec/support/*.rb"].sort.each {|f| 
+  require f
+}
 
 require 'score'
 require 'event'
@@ -10,3 +13,4 @@ RSpec.configure do |config|
 
   config.order = 'random'
 end
+

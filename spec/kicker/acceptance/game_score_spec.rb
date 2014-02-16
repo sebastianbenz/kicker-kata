@@ -60,15 +60,5 @@ describe 'game score' do
 
   end
 
-  context 'player ranking' do
-
-    it 'number of won games increases' do
-
-#      expect(output).to receive(:on_new_player_ranking).with(white_has_two_goals)
-
-    end
-
-  end
-
 
 end

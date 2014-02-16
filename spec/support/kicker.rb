@@ -1,4 +1,6 @@
 shared_context 'kicker' do
+  include Event
+  include Kicker
   
   class EventRecorder
 

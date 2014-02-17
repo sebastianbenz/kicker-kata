@@ -6,18 +6,25 @@ module Kicker
 
     def initialize(score_monitor)
       @score_monitor = score_monitor
-      @score_counter = ScoreCounter.new
-      @teams = TeamRegistry.new
+      @teams = Teams.new
 
       @ranking = {}
-      @black_players = {}
-      @white_players = {}
+
+      @score_counter = ScoreCounter.new
+      @score_counter.on_game_ended do |winning_team|
+        @teams.each_player(winning_team) do |name| 
+          @ranking[name] += 1 
+        end
+        ranking = Event::Ranking.new(@ranking)
+        @score_monitor.on_new_player_ranking(ranking)
+        @score_counter.start_new_game
+      end
     end
 
     def handle_event(event)
       event = Event.from_string(event)
       case event
-      when Event::Goal then handle_goal(event)
+      when Event::Goal then @score_counter.goal(event)
       when Event::Registration then handle_registration(event)
       end
       fire_new_score
@@ -25,32 +32,10 @@ module Kicker
 
     private
 
-    def handle_goal(event)
-      @score_counter.goal(event)
-      handle_game_ended if @score_counter.game_ended?
-    end
-
     def handle_registration(player)
       @score_counter.start_new_game
-      team = player.is_black ? @black_players : @white_players
-      team[player.position] = player.name
       @teams.register(player)
       @ranking[player.name] = 0 if !@ranking.include?(player.name)
-    end
-
-    def handle_game_ended
-      team = @score_counter.black_won? ? @black_players : @white_players
-      update_ranking(team)
-      ranking = Event::Ranking.new(@ranking)
-      @score_monitor.on_new_player_ranking(ranking)
-      @score_counter.start_new_game
-    end
-
-    def update_ranking(team)
-      team.each { |pos, name| 
-        wins = @ranking.fetch(name, 0)
-        @ranking[name] = wins + 1 
-      }
     end
 
     def fire_new_score
@@ -60,21 +45,20 @@ module Kicker
 
   end
 
-  class TeamRegistry
+  class Teams
 
     def initialize
-      @teams = Hash.new{ {} }
+      @teams = Hash.new{ [] }
     end
 
     def register(player)
-      @teams[player.position] = player.name
+      @teams[player.position + player.team] = player
     end
 
     def each_player(team, &block) 
-        puts "test:#{team} -> #{@team}"
-      @teams[team].each do |pos, name|
-        puts "#{pos} -> #{name}"
-        block.call(pos, name)
+      @teams.select{ |k,v| v.team == team }.each do |k,p|
+        puts "#{p} found"
+        block.call(p.name) 
       end
     end
 
@@ -97,45 +81,44 @@ module Kicker
 
     def initialize
       start_new_game
+      @observers = []
     end
 
     def goal(new_score)
-      if new_score.is_black
-        @score_black += 1
-      else
-        @score_white += 1
+      @score[new_score.team] += 1
+      @score.select {|t,s| s == GOALS_TO_WIN}.each do |team, score|
+        @observers.each {|o| o.call(team)}
       end
     end
 
     def start_new_game
-      @score_black = 0
-      @score_white = 0
+      @score = {
+        "black" => 0,
+        "white" => 0
+      }
     end
 
     def current_score
-      Score.new(@score_black, @score_white)
+      Score.new(
+        @score["black"],
+        @score["white"])
     end
 
     def game_ended? 
-      has_won(@score_black) || has_won(@score_white)
+      @score.has_value?(GOALS_TO_WIN)
     end
 
     def black_won?
-      has_won(@score_black)
+      has_won(@score["black"])
     end
 
     def has_won(score)
       score == GOALS_TO_WIN
     end
 
-    def winning_team
-      black_won? ? "black" : "white"
+    def on_game_ended(&observer)
+      @observers << observer
     end
-
-    def on_game_end
-      yield(winning_team) if game_ended?
-    end
-
 
   end
 

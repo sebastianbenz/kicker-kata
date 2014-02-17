@@ -1,9 +1,9 @@
 require 'spec_helper'
 
-describe 'player ranking' do
+describe 'counting wins per player' do
   include_context 'kicker'
 
-  context 'counts wins for team with' do
+  context 'team with' do
 
     it 'single player' do
       register(:black, :offense, 'Sebastian')

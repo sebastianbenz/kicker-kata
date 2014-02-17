@@ -3,10 +3,14 @@ require 'spec_helper'
 describe 'game score' do
   include_context 'kicker'
 
-  new_game_result = Kicker::Score.new(0, 0).to_s
-  white_has_one_goal = Kicker::Score.new(0, 1).to_s
-  white_has_two_goals = Kicker::Score.new(0, 2).to_s
-  black_has_one_goal = Kicker::Score.new(1, 0).to_s
+  let(:new_game_result){ score(0,0) }
+  let(:white_has_one_goal){ score(0,1) } 
+  let(:white_has_two_goals){ score(0,2) }
+  let(:black_has_one_goal){ score(1,0) }
+
+  def score(black, white)
+    Kicker::Score.black_and_white(black, white).to_s
+  end
 
   context 'in game results' do
 

@@ -29,7 +29,7 @@ describe 'counting wins per player' do
 
   end
 
-  it 'increases ranking only for winning team' do
+  it 'ranking increases only for winning team' do
       register(:black, :offense, 'Jerry')
       register(:white, :offense, 'Tom')
       win_for(:black)

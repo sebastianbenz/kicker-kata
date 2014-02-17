@@ -10,7 +10,7 @@ module Kicker
 
       @ranking = {}
 
-      @score_counter = ScoreCounter.new
+      @score_counter = Score.black_and_white
       @score_counter.on_game_ended do |winning_team|
         @teams.each_player(winning_team) do |name| 
           @ranking[name] += 1 
@@ -39,8 +39,7 @@ module Kicker
     end
 
     def fire_new_score
-      score = @score_counter.current_score
-      @score_monitor.on_new_score(score)
+      @score_monitor.on_new_score(@score_counter)
     end
 
   end
@@ -57,7 +56,6 @@ module Kicker
 
     def each_player(team, &block) 
       @teams.select{ |k,v| v.team == team }.each do |k,p|
-        puts "#{p} found"
         block.call(p.name) 
       end
     end
@@ -65,14 +63,44 @@ module Kicker
   end
 
 
-  class Score < Struct.new(:black, :white)
+  class Score 
 
-    def initialize(score_black, score_white)
-      super(score_black.to_i, score_white.to_i)
+    def self.black_and_white(black=0, white=0)
+      Score.new({'black' => black, 'white' => white })
+    end
+
+    def initialize(scores)
+      @scores = scores
+      @observers = []
+    end
+
+    def goal(new_score)
+      count_score(new_score)
+      notify_observers
+    end
+
+    def start_new_game
+      @scores.each { |t, s| @scores[t] = 0 }
     end
 
     def to_s
-      "score:{\"black\":#{black},\"white\":#{white}}"
+      "score:#{@scores.to_json}"
+    end
+
+    def on_game_ended(&observer)
+      @observers << observer
+    end
+
+    private
+
+    def count_score(new_score)
+      @scores[new_score.team] += 1
+    end
+
+    def notify_observers
+      @scores.select {|t,s| s == GOALS_TO_WIN}.each do |team, score|
+        @observers.each {|o| o.call(team)}
+      end
     end
 
   end
@@ -85,10 +113,8 @@ module Kicker
     end
 
     def goal(new_score)
-      @score[new_score.team] += 1
-      @score.select {|t,s| s == GOALS_TO_WIN}.each do |team, score|
-        @observers.each {|o| o.call(team)}
-      end
+      count_score(new_score)
+      notify_observers
     end
 
     def start_new_game
@@ -99,26 +125,25 @@ module Kicker
     end
 
     def current_score
-      Score.new(
-        @score["black"],
-        @score["white"])
-    end
-
-    def game_ended? 
-      @score.has_value?(GOALS_TO_WIN)
-    end
-
-    def black_won?
-      has_won(@score["black"])
-    end
-
-    def has_won(score)
-      score == GOALS_TO_WIN
+      Score.new(@score)
     end
 
     def on_game_ended(&observer)
       @observers << observer
     end
+
+    private
+
+    def count_score(new_score)
+      @score[new_score.team] += 1
+    end
+
+    def notify_observers
+      @score.select {|t,s| s == GOALS_TO_WIN}.each do |team, score|
+        @observers.each {|o| o.call(team)}
+      end
+    end
+
 
   end
 

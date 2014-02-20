@@ -2,28 +2,16 @@ require 'json'
 
 module Event
 
+  Player = Struct.new(:team, :position, :name)
+  Goal = Struct.new(:team)
+
   def self.from_string(input)
-    event, *rest = input.split(':')
+    event, *fragments = input.split(':')
     case event
-    when 'goal' then Goal.new(rest)
-    when 'register' then Player.new(rest)
+    when 'register' then Player.new(fragments[0], fragments[1], fragments[2])
+    when 'goal' then Goal.new(fragments[0])
     end
   end
 
-  class Player < Struct.new(:team, :position, :name)
-
-    def initialize(fragments)
-      super(fragments[0], fragments[1], fragments[2])
-    end
-
-  end
-
-  class Goal < Struct.new(:team)
-
-    def initialize(team)
-      super(team[0])
-    end
-
-  end
 
 end

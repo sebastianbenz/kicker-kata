@@ -8,20 +8,24 @@ module Kicker
       @score_monitor = score_monitor
 
       @teams = Teams.new
-      @ranking = Ranking.new
+      @player_ranking = Ranking.player_ranking
+      @team_ranking = Ranking.team_ranking
       @score = Score.black_and_white
 
       @score.on_game_end do |winning_team|
         update_statistics(winning_team)
-        @score_monitor.on_new_player_ranking(@ranking)
+        @score_monitor.on_new_player_ranking(@player_ranking)
+        @score_monitor.on_new_team_ranking(@team_ranking)
         @score.start_new_game
       end
     end
 
     def update_statistics(winning_team)
-      @teams.each_player(winning_team) do |name| 
-        @ranking.new_winner(name)
+      winning_team_players = @teams.players_in_team(winning_team).map(&:name)
+      winning_team_players.each do |player| 
+        @player_ranking.new_winner(player)
       end
+      @team_ranking.new_winner(winning_team_players)
     end
 
     def handle_event(event)
@@ -38,7 +42,9 @@ module Kicker
     def handle_registration(player)
       @score.start_new_game
       @teams.register(player)
-      @ranking.register(player.name)
+      @player_ranking.register(player.name)
+      new_team = @teams.players_in_team(player.team)
+      @team_ranking.register(new_team.map(&:name))
     end
 
     def fire_new_score
@@ -49,23 +55,37 @@ module Kicker
 
   class Ranking
 
-    def initialize(player_rankings = {})
-      @player_rankings = player_rankings
+    def self.player_ranking(rankings = {})
+      Ranking.new('player_ranking', rankings)
     end
 
-    def new_winner(player)
-      @player_rankings[player] += 1 
+    def self.team_ranking(rankings = {})
+      Ranking.new('team_ranking', rankings)
     end
 
-    def register(player)
-      @player_rankings[player] = 0 if !@player_rankings.include?(player)
+    def initialize(name, rankings = {})
+      @name = name
+      @rankings = rankings
+    end
+
+    def new_winner(participant)
+      @rankings[participant] += 1 if exists?(participant)
+    end
+
+    def register(participant)
+      @rankings[participant] = 0 if not exists?(participant)
+    end
+
+    def exists?(participant)
+      @rankings.include?(participant)
     end
 
     def to_s
-      "player-ranking:#{@player_rankings.to_json}"
+      "#{@name}:#{@rankings.to_json}"
     end
 
   end
+
 
   class Teams
 
@@ -78,9 +98,13 @@ module Kicker
     end
 
     def each_player(team, &block) 
-      @teams.select{ |k,v| v.team == team }.each do |k,p|
+      players_in_team(team).each do |p|
         block.call(p.name) 
       end
+    end
+
+    def players_in_team(team)
+      @teams.select{ |k,v| v.team == team }.values
     end
 
   end

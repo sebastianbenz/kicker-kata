@@ -4,12 +4,13 @@ shared_context 'kicker' do
   
   class EventRecorder
 
-    attr_reader :scores, :team_ranking, :player_ranking
+    attr_reader :scores, :team_ranking, :player_ranking, :team_ranking
 
     def initialize
       @scores = []
       @team_ranking = []
       @player_ranking = []
+      @team_ranking = []
     end
 
     def on_new_score(score)
@@ -24,6 +25,9 @@ shared_context 'kicker' do
       @player_ranking << ranking.to_s
     end
 
+    def on_new_team_ranking(ranking)
+      @team_ranking << ranking.to_s
+    end
 
   end
 
@@ -43,7 +47,11 @@ shared_context 'kicker' do
   end
 
   def new_ranking(values)
-    Kicker::Ranking.new(values).to_s
+    Kicker::Ranking.player_ranking(values).to_s
+  end
+
+  def new_team_ranking(values)
+    Kicker::Ranking.team_ranking(values).to_s
   end
 
 end

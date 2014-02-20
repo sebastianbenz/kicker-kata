@@ -42,5 +42,9 @@ shared_context 'kicker' do
     statistics.handle_event("goal:#{team}")
   end
 
+  def new_ranking(values)
+    Kicker::Ranking.new(values).to_s
+  end
+
 end
 

@@ -12,11 +12,15 @@ module Kicker
       @score = Score.black_and_white
 
       @score.on_game_end do |winning_team|
-        @teams.each_player(winning_team) do |name| 
-          @ranking.new_winner(name)
-        end
+        update_statistics(winning_team)
         @score_monitor.on_new_player_ranking(@ranking)
         @score.start_new_game
+      end
+    end
+
+    def update_statistics(winning_team)
+      @teams.each_player(winning_team) do |name| 
+        @ranking.new_winner(name)
       end
     end
 
@@ -95,19 +99,19 @@ module Kicker
 
     def on_goal(new_score)
       increase_score(new_score)
-      shout_out_win
+      fire_new_game_result
     end
 
     def start_new_game
       @scores.each { |t, s| @scores[t] = 0 }
     end
 
-    def to_s
-      "score:#{@scores.to_json}"
-    end
-
     def on_game_end(&observer)
       @observers << observer
+    end
+
+    def to_s
+      "score:#{@scores.to_json}"
     end
 
     private
@@ -116,7 +120,7 @@ module Kicker
       @scores[new_score.team] += 1
     end
 
-    def shout_out_win
+    def fire_new_game_result
       winning_teams.each do |team, score|
         @observers.each {|o| o.call(team)}
       end

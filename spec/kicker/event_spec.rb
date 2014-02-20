@@ -8,27 +8,24 @@ describe 'Event' do
     context 'goal' do
       subject { Event.from_string('goal:black') }
       it { should be_a(Goal) } 
-      its(:is_black) { should be_true } 
-      its(:is_white) { should be_false } 
+      its(:team) { should eq('black') } 
     end
 
     describe 'new player' do
 
       context 'black offense' do
         subject { Event.from_string('register:black:offense:A') }
-        it { should be_a(Registration) } 
-        its(:is_black) { should be_true } 
-        its(:is_white) { should be_false } 
+        it { should be_a(Player) } 
         its(:position) { should eq('offense') } 
+        its(:team) { should eq('black') } 
         its(:name) { should eq('A') } 
       end
 
       context 'white defense' do
         subject { Event.from_string('register:white:defense:B') }
-        it { should be_a(Registration) } 
-        its(:is_white) { should be_true } 
-        its(:is_black) { should be_false } 
+        it { should be_a(Player) } 
         its(:position) { should eq('defense') } 
+        its(:team) { should eq('white') } 
         its(:name) { should eq('B') } 
       end
 

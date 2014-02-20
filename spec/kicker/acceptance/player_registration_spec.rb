@@ -9,7 +9,7 @@ describe 'counting wins per player' do
       register(:black, :offense, 'Sebastian')
       win_for(:black)
       expect(events.player_ranking).to eq([
-        Ranking.new({
+        new_ranking({
           'Sebastian' => 1
         }).to_s
       ])
@@ -20,7 +20,7 @@ describe 'counting wins per player' do
       register(:white, :defense, 'Jerry')
       win_for(:white)
       expect(events.player_ranking).to eq([
-        Ranking.new({
+        new_ranking({
           'Tom' => 1,
           'Jerry' => 1
         }).to_s
@@ -34,7 +34,7 @@ describe 'counting wins per player' do
       register(:white, :offense, 'Tom')
       win_for(:black)
       expect(events.player_ranking).to eq([
-        Ranking.new({
+        new_ranking({
           'Jerry' => 1,
           'Tom' => 0
         }).to_s
@@ -46,7 +46,7 @@ describe 'counting wins per player' do
       register(:white, :offense, 'Tom')
       2.times{ win_for(:black) }
       expect(events.player_ranking.last).to eq(
-        Ranking.new({
+        new_ranking({
           'Jerry' => 2,
           'Tom' => 0
         }).to_s
@@ -60,7 +60,7 @@ describe 'counting wins per player' do
       register(:black, :offense, 'Jerry')
       win_for(:black)
       expect(events.player_ranking.last).to eq(
-        Ranking.new({
+        new_ranking({
           'Jerry' => 2,
           'Tom' => 0
         }).to_s
@@ -72,11 +72,15 @@ describe 'counting wins per player' do
       register(:black, :offense, 'Tom')
       win_for(:black)
       expect(events.player_ranking.last).to eq(
-        Ranking.new({
+        new_ranking({
           'Jerry' => 0,
           'Tom' => 1
         }).to_s
       )
+  end
+
+  def new_ranking(values)
+    Kicker::Ranking.new(values).to_s
   end
 
 end

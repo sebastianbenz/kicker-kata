@@ -6,26 +6,25 @@ module Kicker
 
     def initialize(score_monitor)
       @score_monitor = score_monitor
+
       @teams = Teams.new
+      @ranking = Ranking.new
+      @score = Score.black_and_white
 
-      @ranking = {}
-
-      @score_counter = Score.black_and_white
-      @score_counter.on_game_ended do |winning_team|
+      @score.on_game_end do |winning_team|
         @teams.each_player(winning_team) do |name| 
-          @ranking[name] += 1 
+          @ranking.new_winner(name)
         end
-        ranking = Event::Ranking.new(@ranking)
-        @score_monitor.on_new_player_ranking(ranking)
-        @score_counter.start_new_game
+        @score_monitor.on_new_player_ranking(@ranking)
+        @score.start_new_game
       end
     end
 
     def handle_event(event)
       event = Event.from_string(event)
       case event
-      when Event::Goal then @score_counter.goal(event)
-      when Event::Registration then handle_registration(event)
+      when Event::Goal then @score.on_goal(event)
+      when Event::Player then handle_registration(event)
       end
       fire_new_score
     end
@@ -33,13 +32,33 @@ module Kicker
     private
 
     def handle_registration(player)
-      @score_counter.start_new_game
+      @score.start_new_game
       @teams.register(player)
-      @ranking[player.name] = 0 if !@ranking.include?(player.name)
+      @ranking.register(player.name)
     end
 
     def fire_new_score
-      @score_monitor.on_new_score(@score_counter)
+      @score_monitor.on_new_score(@score)
+    end
+
+  end
+
+  class Ranking
+
+    def initialize(player_rankings = {})
+      @player_rankings = player_rankings
+    end
+
+    def new_winner(player)
+      @player_rankings[player] += 1 
+    end
+
+    def register(player)
+      @player_rankings[player] = 0 if !@player_rankings.include?(player)
+    end
+
+    def to_s
+      "player-ranking:#{@player_rankings.to_json}"
     end
 
   end
@@ -74,9 +93,9 @@ module Kicker
       @observers = []
     end
 
-    def goal(new_score)
-      count_score(new_score)
-      notify_observers
+    def on_goal(new_score)
+      increase_score(new_score)
+      shout_out_win
     end
 
     def start_new_game
@@ -87,64 +106,28 @@ module Kicker
       "score:#{@scores.to_json}"
     end
 
-    def on_game_ended(&observer)
+    def on_game_end(&observer)
       @observers << observer
     end
 
     private
 
-    def count_score(new_score)
+    def increase_score(new_score)
       @scores[new_score.team] += 1
     end
 
-    def notify_observers
-      @scores.select {|t,s| s == GOALS_TO_WIN}.each do |team, score|
+    def shout_out_win
+      winning_teams.each do |team, score|
         @observers.each {|o| o.call(team)}
       end
     end
 
-  end
-
-  class ScoreCounter
-
-    def initialize
-      start_new_game
-      @observers = []
-    end
-
-    def goal(new_score)
-      count_score(new_score)
-      notify_observers
-    end
-
-    def start_new_game
-      @score = {
-        "black" => 0,
-        "white" => 0
-      }
-    end
-
-    def current_score
-      Score.new(@score)
-    end
-
-    def on_game_ended(&observer)
-      @observers << observer
-    end
-
-    private
-
-    def count_score(new_score)
-      @score[new_score.team] += 1
-    end
-
-    def notify_observers
-      @score.select {|t,s| s == GOALS_TO_WIN}.each do |team, score|
-        @observers.each {|o| o.call(team)}
-      end
+    def winning_teams
+      @scores.select {|t,s| s == GOALS_TO_WIN}
     end
 
 
   end
+
 
 end

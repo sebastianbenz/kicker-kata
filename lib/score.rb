@@ -97,12 +97,6 @@ module Kicker
       @teams[player.position + player.team] = player
     end
 
-    def each_player(team, &block) 
-      players_in_team(team).each do |p|
-        block.call(p.name) 
-      end
-    end
-
     def players_in_team(team)
       @teams.select{ |k,v| v.team == team }.values
     end
